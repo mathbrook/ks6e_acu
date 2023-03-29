@@ -17,7 +17,7 @@ FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN_2;
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> CAN_1;
 static CAN_message_t testMsg;
 /*****PROTOTYPES*****/
-void read_pedal_values();
+void read_relay_values();
 void readBroadcast();
 void setup()
 {
@@ -56,10 +56,10 @@ void setup()
 }
 void loop()
 {
-    read_pedal_values();
+    read_relay_values();
     if(cantest.check()){
-        testMsg.buf[0] = 0x69;
-        testMsg.id = 0x69;
+        testMsg.buf[0] = 0x68;
+        testMsg.id = 0x68;
         CAN_1.write(testMsg);
         CAN_2.write(testMsg);
         DashLedscolorWipe(pixelColor);
@@ -77,12 +77,16 @@ void loop()
 }
 
 
-inline void read_pedal_values() {
+inline void read_relay_values() { // Changed to relay
     /* Filter ADC readings */
     imdrelay = ALPHA * imdrelay + (1 - ALPHA) * ADC.read_adc(IMD_RELAY);
+    Serial.println(imdrelay);
     bmsrelay = ALPHA * bmsrelay + (1 - ALPHA) * ADC.read_adc(BMS_RELAY);
+    Serial.println(bmsrelay);
     imdgpio = ALPHA * imdgpio + (1 - ALPHA) * ADC.read_adc(IMD_GPIO);
+    Serial.println(imdgpio);
     bmsgpio = ALPHA * bmsgpio + (1 - ALPHA) * ADC.read_adc(BMS_GPIO);
+    Serial.println(bmsgpio);
     //we dont have 2 brake sensors so commented out
     // filtered_brake2_reading = ALPHA * filtered_brake2_reading + (1 - ALPHA) * ADC.read_adc(ADC_BRAKE_2_CHANNEL);
 
