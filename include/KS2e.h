@@ -31,5 +31,7 @@
 //Pump speed
 float imdrelay{},bmsrelay{},imdgpio{},bmsgpio{};
 float sdcvsense{},vsense5v{},vsense12v{},sdcsense{},sense12v{},sensefan{},humidity{},temp{};
-ADC_SPI ADC(DEFAULT_SPI_CS, DEFAULT_SPI_SPEED);
+float BODGEimdrelay{};
+float BODGEbmsrelay{};
+ADC_SPI ADC(ADC_CS, DEFAULT_SPI_SPEED);
 #endif

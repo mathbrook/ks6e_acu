@@ -6,8 +6,8 @@
 #define NEOPIXEL_DIN 8
 #define FAN_CTRL 9
 #define ADC_CS 10
-#define ANALOG_TEMP 14
-#define ANALOG_HUMIDITY 15
+#define ANALOG_IMD 14 // No longer temp, bodged off of the IMD_RELAY so that's why it's used as such
+#define ANALOG_BMS 15 // No longer humidity, bodged off of the BMS_RELAY so that's why it's used as such
 #define SENSE_FAN 16
 #define SENSE_12V 17
 #define SDC_SENSE 18
@@ -17,7 +17,7 @@
 
 
 /*
- * ADC pin definitions
+ * ADC channel pin definitions
  */
 #define IMD_RELAY 0
 #define BMS_RELAY 1 

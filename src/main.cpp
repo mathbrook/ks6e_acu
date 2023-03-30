@@ -70,23 +70,29 @@ void loop()
     }
     if(fantest.check()){
         digitalToggle(FAN_CTRL);
-        Serial.printf("imd relay: %f bms relay: %f imd gpio: %f bms gpio: %f\n",imdrelay,bmsrelay,imdgpio,bmsgpio);
+        // Serial.printf("imd relay: %f bms relay: %f imd gpio: %f bms gpio: %f\n",imdrelay,bmsrelay,imdgpio,bmsgpio);
+        // Serial.printf("RAW imd relay: %f RAW bms relay: %f RAW imd gpio: %f RAW bms gpio: %f\n",ADC.read_adc(IMD_RELAY),ADC.read_adc(BMS_RELAY),ADC.read_adc(IMD_GPIO),ADC.read_adc(BMS_GPIO));
+        //Serial.printf("Bodge imd relay: %f RAW Bodge bms relay: %f\n",BODGEimdrelay,BODGEbmsrelay);
+        //Serial.printf("Bodge imd relay: %f RAW Bodge bms relay: %f\n",analogRead(ANALOG_IMD),analogRead(ANALOG_BMS));
+        //Serial.println("");
     }
-
-
+    Serial.print("BMS: ");
+    Serial.println(analogRead(BODGEbmsrelay));
+    Serial.print("IMD: ");
+    Serial.println(analogRead(BODGEimdrelay));
+    Serial.println("");
 }
 
 
 inline void read_relay_values() { // Changed to relay
     /* Filter ADC readings */
-    imdrelay = ALPHA * imdrelay + (1 - ALPHA) * ADC.read_adc(IMD_RELAY);
-    Serial.println(imdrelay);
-    bmsrelay = ALPHA * bmsrelay + (1 - ALPHA) * ADC.read_adc(BMS_RELAY);
-    Serial.println(bmsrelay);
-    imdgpio = ALPHA * imdgpio + (1 - ALPHA) * ADC.read_adc(IMD_GPIO);
-    Serial.println(imdgpio);
-    bmsgpio = ALPHA * bmsgpio + (1 - ALPHA) * ADC.read_adc(BMS_GPIO);
-    Serial.println(bmsgpio);
+    // imdrelay = ALPHA * imdrelay + (1 - ALPHA) * ADC.read_adc(IMD_RELAY);
+    // bmsrelay = ALPHA * bmsrelay + (1 - ALPHA) * ADC.read_adc(BMS_RELAY);
+    // imdgpio = ALPHA * imdgpio + (1 - ALPHA) * ADC.read_adc(IMD_GPIO);
+    // bmsgpio = ALPHA * bmsgpio + (1 - ALPHA) * ADC.read_adc(BMS_GPIO);
+
+    BODGEimdrelay = ALPHA * BODGEimdrelay + (1 - ALPHA) * analogRead(ANALOG_IMD);
+    BODGEbmsrelay = ALPHA * BODGEbmsrelay + (1 - ALPHA) * analogRead(ANALOG_BMS);
     //we dont have 2 brake sensors so commented out
     // filtered_brake2_reading = ALPHA * filtered_brake2_reading + (1 - ALPHA) * ADC.read_adc(ADC_BRAKE_2_CHANNEL);
 
