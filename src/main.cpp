@@ -18,36 +18,36 @@ FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> CAN_1;
 static CAN_message_t testMsg;
 /*****PROTOTYPES*****/
 void read_relay_values();
-void readBroadcast();
+//void readBroadcast();
 void setup()
 {
     Serial.begin(115200);
 
     leds.begin();
     leds.setBrightness(BRIGHTNESS);
-    CAN_1.begin();
-    CAN_1.setBaudRate(500000);
-    CAN_2.begin();
-    CAN_2.setBaudRate(500000);
+    // CAN_1.begin();
+    // CAN_1.setBaudRate(500000);
+    // CAN_2.begin();
+    // CAN_2.setBaudRate(500000);
 
-    CAN_1.setMaxMB(NUM_TX_MAILBOXES+NUM_RX_MAILBOXES);
-    for (int i = 0; i<NUM_RX_MAILBOXES; i++){
-        CAN_1.setMB((FLEXCAN_MAILBOX)i,RX,STD);
-    }
-    for (int i = NUM_RX_MAILBOXES; i<(NUM_TX_MAILBOXES + NUM_RX_MAILBOXES); i++){
-        CAN_1.setMB((FLEXCAN_MAILBOX)i,TX,STD);
-    }
+    // CAN_1.setMaxMB(NUM_TX_MAILBOXES+NUM_RX_MAILBOXES);
+    // for (int i = 0; i<NUM_RX_MAILBOXES; i++){
+    //     CAN_1.setMB((FLEXCAN_MAILBOX)i,RX,STD);
+    // }
+    // for (int i = NUM_RX_MAILBOXES; i<(NUM_TX_MAILBOXES + NUM_RX_MAILBOXES); i++){
+    //     CAN_1.setMB((FLEXCAN_MAILBOX)i,TX,STD);
+    // }
 
-    CAN_2.setMaxMB(NUM_TX_MAILBOXES+NUM_RX_MAILBOXES);
-    for (int i = 0; i<(NUM_RX_MAILBOXES-1); i++){//leave one free for ext ID
-         CAN_2.setMB((FLEXCAN_MAILBOX)i,RX,STD);
-    }
-    for (int i = NUM_RX_MAILBOXES; i<(NUM_TX_MAILBOXES + NUM_RX_MAILBOXES); i++){
-        CAN_2.setMB((FLEXCAN_MAILBOX)i,TX,STD);
-    }
-     CAN_2.setMB((FLEXCAN_MAILBOX)5,RX,EXT);
-    CAN_1.mailboxStatus();
-    CAN_2.mailboxStatus();
+    // CAN_2.setMaxMB(NUM_TX_MAILBOXES+NUM_RX_MAILBOXES);
+    // for (int i = 0; i<(NUM_RX_MAILBOXES-1); i++){//leave one free for ext ID
+    //      CAN_2.setMB((FLEXCAN_MAILBOX)i,RX,STD);
+    // }
+    // for (int i = NUM_RX_MAILBOXES; i<(NUM_TX_MAILBOXES + NUM_RX_MAILBOXES); i++){
+    //     CAN_2.setMB((FLEXCAN_MAILBOX)i,TX,STD);
+    // }
+    //  CAN_2.setMB((FLEXCAN_MAILBOX)5,RX,EXT);
+    // CAN_1.mailboxStatus();
+    // CAN_2.mailboxStatus();
     DashLedscolorWipe(WHITE);
     delay(50);
     DashLedscolorWipe(PINK);
@@ -58,11 +58,11 @@ void loop()
 {
     read_relay_values();
     if(cantest.check()){
-        testMsg.buf[0] = 0x68;
-        testMsg.id = 0x68;
-        CAN_1.write(testMsg);
-        CAN_2.write(testMsg);
-        DashLedscolorWipe(pixelColor);
+        // testMsg.buf[0] = 0x68;
+        // testMsg.id = 0x68;
+        // CAN_1.write(testMsg);
+        // CAN_2.write(testMsg);
+        // DashLedscolorWipe(pixelColor);
         pixelColor++;
         if(pixelColor>7){
             pixelColor=0;
@@ -75,12 +75,15 @@ void loop()
         //Serial.printf("Bodge imd relay: %f RAW Bodge bms relay: %f\n",BODGEimdrelay,BODGEbmsrelay);
         //Serial.printf("Bodge imd relay: %f RAW Bodge bms relay: %f\n",analogRead(ANALOG_IMD),analogRead(ANALOG_BMS));
         //Serial.println("");
+        Serial.print("BMS: ");
+        Serial.println(analogRead(BODGEbmsrelay));
+        Serial.print("IMD: ");
+        Serial.println(analogRead(BODGEimdrelay));
+        Serial.println("");
+
+
     }
-    Serial.print("BMS: ");
-    Serial.println(analogRead(BODGEbmsrelay));
-    Serial.print("IMD: ");
-    Serial.println(analogRead(BODGEimdrelay));
-    Serial.println("");
+
 }
 
 
@@ -91,8 +94,8 @@ inline void read_relay_values() { // Changed to relay
     // imdgpio = ALPHA * imdgpio + (1 - ALPHA) * ADC.read_adc(IMD_GPIO);
     // bmsgpio = ALPHA * bmsgpio + (1 - ALPHA) * ADC.read_adc(BMS_GPIO);
 
-    BODGEimdrelay = ALPHA * BODGEimdrelay + (1 - ALPHA) * analogRead(ANALOG_IMD);
-    BODGEbmsrelay = ALPHA * BODGEbmsrelay + (1 - ALPHA) * analogRead(ANALOG_BMS);
+    BODGEimdrelay = analogRead(ANALOG_IMD);
+    BODGEbmsrelay = analogRead(ANALOG_BMS);
     //we dont have 2 brake sensors so commented out
     // filtered_brake2_reading = ALPHA * filtered_brake2_reading + (1 - ALPHA) * ADC.read_adc(ADC_BRAKE_2_CHANNEL);
 
