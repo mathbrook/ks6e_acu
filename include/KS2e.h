@@ -5,7 +5,7 @@
 #include <FlexCAN_T4.h>
 #include <Metro.h>
 #include <MCU_status.h>
-#include <SPI.h>
+//#include <SPI.h>
 #include <string.h>
 #include <stdint.h>
 #include <KS2eVCUgpios.h>
@@ -33,5 +33,7 @@ float imdrelay{},bmsrelay{},imdgpio{},bmsgpio{};
 float sdcvsense{},vsense5v{},vsense12v{},sdcsense{},sense12v{},sensefan{},humidity{},temp{};
 float BODGEimdrelay{};
 float BODGEbmsrelay{};
-ADC_SPI ADC(ADC_CS, DEFAULT_SPI_SPEED);
+bool imdstate{};
+bool bmsstate{};
+//ADC_SPI ADC(ADC_CS, DEFAULT_SPI_SPEED);
 #endif
