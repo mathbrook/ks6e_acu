@@ -64,10 +64,10 @@ Metro getACCCanRate = Metro(100);
 Metro getTempRate = Metro(500);
 Metro sendTempRate = Metro(100);
 Metro sendCAN_1 = Metro(50);
-Metro sendCANTest = Metro(100);
+Metro sendCANTest = Metro(50);
 
 // Regular timings
-Metro fantest = Metro(100);
+Metro fanTest = Metro(5000);
 Metro heartBeat = Metro(500);
 Metro getRelay = Metro(100);
 Metro printDebug = Metro(1000);
@@ -164,7 +164,7 @@ void loop()
         CAN_1.write(dashMsg);
     }
 
-    if(fantest.check()){
+    if(fanTest.check()){
         digitalToggle(FAN_CTRL);
     }
 
@@ -202,14 +202,14 @@ void loop()
 }
 // Main loop -----------------------------------------------------------------------
 
-// Read the ACC can
+// Read the ACC CAN
 int readACC_1(CAN_message_t &msg)
 {    
   int rxMSG = ACC_1.read(msg);
   return rxMSG;
 }
 
-// Updates battery temp array with the values from the isolated ACC canbus via a switch case
+// Updates battery temp array with the values from the isolated ACC CANbus via a switch case
 void updateAccumulatorCAN()
 {  
     CAN_message_t rxMsg;
