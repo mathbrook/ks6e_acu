@@ -17,7 +17,7 @@
 #include <KS2e.h>
 #include <MDB_labels.h>
 
-// #define DEBUG
+#define DEBUG
 // #define cantest
 
 // BIG DEFINES FOR MODULES & SWITCH CASE (absolute cancer code)
@@ -53,6 +53,7 @@ static CAN_message_t rxMsg;
 #define BMS_Response_ID 0x7EB
 
 // CAN bytes
+int8_t rawBatteryTemps[NUMBER_OF_CELLS];
 int8_t batteryTemps[NUMBER_OF_CELLS];
 int moduleNo = 0;                                                         // byte0
 int enabledTherm;                                                         // byte4
@@ -91,7 +92,18 @@ void setup()
     Serial.begin(115200);
     delay(400);
 
-    // This is the main battery temp array
+    // This is the main raw battery temp array for  
+    Serial.println("Raw battery temp array: ");
+    for (int i = 0; i < NUMBER_OF_CELLS; i++)
+    {
+        Serial.print("Cell number: ");
+        Serial.print(i);
+        Serial.print(" Value: ");
+        rawBatteryTemps[i] = 0; // init default temps as a safe value
+        Serial.println(rawBatteryTemps[i]);
+    }
+
+    // This is the main calibrated battery temp array 
     Serial.println("Battery temp array: ");
     for (int i = 0; i < NUMBER_OF_CELLS; i++)
     {
@@ -185,17 +197,17 @@ void loop()
         //Serial.printf("Bodge imd relay: %f RAW Bodge bms relay: %f\n",analogRead(ANALOG_IMD),analogRead(ANALOG_BMS));
         //Serial.println("");
         
-        Serial.print("IMD: ");
-        Serial.println(analogRead(BODGEimdrelay));
-        Serial.print("BMS: ");
-        Serial.println(analogRead(BODGEbmsrelay));
+        // Serial.print("IMD: ");
+        // Serial.println(analogRead(BODGEimdrelay));
+        // Serial.print("BMS: ");
+        // Serial.println(analogRead(BODGEbmsrelay));
 
-        Serial.print("IMD: ");
-        Serial.println(imdstate);
-        Serial.print("BMS: ");
-        Serial.println(bmsstate);
+        // Serial.print("IMD: ");
+        // Serial.println(imdstate);
+        // Serial.print("BMS: ");
+        // Serial.println(bmsstate);
 
-        Serial.println("");
+        // Serial.println("");
     }
 #endif
 
@@ -234,73 +246,73 @@ void updateAccumulatorCAN()
         case (MODULE_1_A): 
         {
             Serial.println("Module 1 A");
-            memcpy(batteryTemps+CELLS_1A,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_1A,rxMsg.buf,6);
             break;
         }
         case (MODULE_1_B): 
         {
             Serial.println("Module 1 B");
-            memcpy(batteryTemps+CELLS_1B,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_1B,rxMsg.buf,6);
             break;
         }
         case (MODULE_2_A): 
         {
             Serial.println("Module 2 A");
-            memcpy(batteryTemps+CELLS_2A,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_2A,rxMsg.buf,6);
             break;
         }
         case (MODULE_2_B): 
         {
             Serial.println("Module 2 B");
-            memcpy(batteryTemps+CELLS_2B,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_2B,rxMsg.buf,6);
             break;
         }
         case (MODULE_3_A): 
         {
             Serial.println("Module 3 A");
-            memcpy(batteryTemps+CELLS_3A,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_3A,rxMsg.buf,6);
             break;
         }
         case (MODULE_3_B): 
         {
             Serial.println("Module 3 B");
-            memcpy(batteryTemps+CELLS_3B,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_3B,rxMsg.buf,6);
             break;
         }
         case (MODULE_4_A): 
         {
             Serial.println("Module 4 A");
-            memcpy(batteryTemps+CELLS_4A,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_4A,rxMsg.buf,6);
             break;
         }
         case (MODULE_4_B): 
         {
             Serial.println("Module 4 B");
-            memcpy(batteryTemps+CELLS_4B,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_4B,rxMsg.buf,6);
             break;
         }
         case (MODULE_5_A): 
         {
             Serial.println("Module 5 A");
-            memcpy(batteryTemps+CELLS_5A,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_5A,rxMsg.buf,6);
             break;
         }
         case (MODULE_5_B): 
         {
             Serial.println("Module 5 B");
-            memcpy(batteryTemps+CELLS_5B,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_5B,rxMsg.buf,6);
             break;
         }
         case (MODULE_6_A): 
         {
             Serial.println("Module 6 A");
-            memcpy(batteryTemps+CELLS_6A,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_6A,rxMsg.buf,6);
             break;
         }
         case (MODULE_6_B): 
         {
             Serial.println("Module 6 B");
-            memcpy(batteryTemps+CELLS_6B,rxMsg.buf,6);
+            memcpy(rawBatteryTemps+CELLS_6B,rxMsg.buf,6);
             break;
         }
         default:
@@ -314,49 +326,62 @@ void updateAccumulatorCAN()
 // Sending highest/lowest temperature to the BMS
 void sendTempData()
 {
-  CAN_message_t sendTempMsg;
-  sendTempMsg.flags.extended = 1;      // extended id
-  sendTempMsg.len = 8;                 // per protocol
-  sendTempMsg.id = ThermistorToBMS_ID; // Temp broadcast ID
-  enabledTherm = NUMBER_OF_CELLS - 1;  // number of cells 0 based
-  int lowTherm = batteryTemps[0];
-  int lowestThermId = 0;
-  int highTherm = batteryTemps[0];
-  int highestThermId = 0;
-  for (int i = 0; i < NUMBER_OF_CELLS; i++)
-  { // get lowest and highest
-    #ifdef DEBUG
-    // Serial.print("Cell number: ");
-    // Serial.print(i);
-    // Serial.print(" Value: ");
-    // Serial.println(batteryTemps[i]);
-    #endif
-    if (batteryTemps[i] < lowTherm)
-    {
-      lowTherm = batteryTemps[i];
-      lowestThermId = i;
-    }
-    if (batteryTemps[i] > highTherm)
-    {
-      highTherm = batteryTemps[i];
-      highestThermId = i;
-    }
-    #ifdef DEBUG
-    // Serial.printf("Iter: %d Highest: %d Lowest: %d\n",i,highTherm,lowTherm);
-    #endif
-  }
+    CAN_message_t sendTempMsg;
+    sendTempMsg.flags.extended = 1;      // extended id
+    sendTempMsg.len = 8;                 // per protocol
+    sendTempMsg.id = ThermistorToBMS_ID; // Temp broadcast ID
+    enabledTherm = NUMBER_OF_CELLS - 1;  // number of cells 0 based
 
-  int avgTherm = (lowTherm + highTherm) / 2;                                                                          // yep
-  int checksum = moduleNo + lowTherm + highTherm + avgTherm + enabledTherm + highestThermId + lowestThermId + 57 + 8; // 0x39 and 0x08 added to checksum per orion protocol
-  byte tempdata[] = {moduleNo, lowTherm, highTherm, avgTherm, enabledTherm, highestThermId, lowestThermId, checksum};
-  #ifdef DEBUG
-  // Serial.println(tempdata[2]);
-  #endif
-  memcpy(sendTempMsg.buf, tempdata, sizeof(sendTempMsg.buf));
-  CAN_1.write(sendTempMsg);
-  // GLobal ints for tracking
-  globalHighTherm = highTherm;
-  globalLowTherm = lowTherm;
+    // This is assigning the calibrated battery temp array from the raw recieved one
+    for (int i = 0; i < NUMBER_OF_CELLS; i++)
+    {
+        batteryTemps[i]=(rawBatteryTemps[i]*-79.256)+168.4;
+        #ifdef DEBUG
+        Serial.print("Cell number: ");
+        Serial.print(i);
+        Serial.print(" Value: ");
+        Serial.println(batteryTemps[i]);
+        #endif
+    }
+
+    int lowTherm = batteryTemps[0];
+    int lowestThermId = 0;
+    int highTherm = batteryTemps[0];
+    int highestThermId = 0;
+    for (int i = 0; i < NUMBER_OF_CELLS; i++)
+    { // get lowest and highest
+        #ifdef DEBUG
+        // Serial.print("Cell number: ");
+        // Serial.print(i);
+        // Serial.print(" Value: ");
+        // Serial.println(batteryTemps[i]);
+        #endif
+        if (batteryTemps[i] < lowTherm)
+        {
+        lowTherm = batteryTemps[i];
+        lowestThermId = i;
+        }
+        if (batteryTemps[i] > highTherm)
+        {
+        highTherm = batteryTemps[i];
+        highestThermId = i;
+        }
+        #ifdef DEBUG
+        // Serial.printf("Iter: %d Highest: %d Lowest: %d\n",i,highTherm,lowTherm);
+        #endif
+    }
+
+    int avgTherm = (lowTherm + highTherm) / 2;                                                                          // yep
+    int checksum = moduleNo + lowTherm + highTherm + avgTherm + enabledTherm + highestThermId + lowestThermId + 57 + 8; // 0x39 and 0x08 added to checksum per orion protocol
+    byte tempdata[] = {moduleNo, lowTherm, highTherm, avgTherm, enabledTherm, highestThermId, lowestThermId, checksum};
+    #ifdef DEBUG
+    // Serial.println(tempdata[2]);
+    #endif
+    memcpy(sendTempMsg.buf, tempdata, sizeof(sendTempMsg.buf));
+    CAN_1.write(sendTempMsg);
+    // GLobal ints for tracking
+    globalHighTherm = highTherm;
+    globalLowTherm = lowTherm;
 }
 
 // getting one of the max temps from BMS (high or low not sure lol)
