@@ -228,90 +228,90 @@ void updateAccumulatorCAN()
     if (readACC_1(rxMsg))
     {
         #ifdef DEBUG
-        Serial.print("MB "); Serial.print(rxMsg.mb);
-        Serial.print("  OVERRUN: "); Serial.print(rxMsg.flags.overrun);
-        Serial.print("  LEN: "); Serial.print(rxMsg.len);
-        Serial.print(" EXT: "); Serial.print(rxMsg.flags.extended);
-        Serial.print(" TS: "); Serial.print(rxMsg.timestamp);
-        Serial.print(" ID: "); Serial.print(rxMsg.id, HEX);
-        Serial.print(" Buffer: ");
-        for ( uint8_t i = 0; i < rxMsg.len; i++ ) {
-        Serial.print(rxMsg.buf[i], HEX); Serial.print(" ");
-        } 
-        Serial.println();
+        // Serial.print("MB "); Serial.print(rxMsg.mb);
+        // Serial.print("  OVERRUN: "); Serial.print(rxMsg.flags.overrun);
+        // Serial.print("  LEN: "); Serial.print(rxMsg.len);
+        // Serial.print(" EXT: "); Serial.print(rxMsg.flags.extended);
+        // Serial.print(" TS: "); Serial.print(rxMsg.timestamp);
+        // Serial.print(" ID: "); Serial.print(rxMsg.id, HEX);
+        // Serial.print(" Buffer: ");
+        // for ( uint8_t i = 0; i < rxMsg.len; i++ ) {
+        // Serial.print(rxMsg.buf[i], HEX); Serial.print(" ");
+        // } 
+        // Serial.println();
         #endif
 
         switch (rxMsg.id)  // This is cancer probably and could better be implemented with a loop I imagine
         {
         case (MODULE_1_A): 
         {
-            Serial.println("Module 1 A");
+            // Serial.println("Module 1 A");
             memcpy(rawBatteryTemps+CELLS_1A,rxMsg.buf,6);
             break;
         }
         case (MODULE_1_B): 
         {
-            Serial.println("Module 1 B");
+            // Serial.println("Module 1 B");
             memcpy(rawBatteryTemps+CELLS_1B,rxMsg.buf,6);
             break;
         }
         case (MODULE_2_A): 
         {
-            Serial.println("Module 2 A");
+            // Serial.println("Module 2 A");
             memcpy(rawBatteryTemps+CELLS_2A,rxMsg.buf,6);
             break;
         }
         case (MODULE_2_B): 
         {
-            Serial.println("Module 2 B");
+            // Serial.println("Module 2 B");
             memcpy(rawBatteryTemps+CELLS_2B,rxMsg.buf,6);
             break;
         }
         case (MODULE_3_A): 
         {
-            Serial.println("Module 3 A");
+            // Serial.println("Module 3 A");
             memcpy(rawBatteryTemps+CELLS_3A,rxMsg.buf,6);
             break;
         }
         case (MODULE_3_B): 
         {
-            Serial.println("Module 3 B");
+            // Serial.println("Module 3 B");
             memcpy(rawBatteryTemps+CELLS_3B,rxMsg.buf,6);
             break;
         }
         case (MODULE_4_A): 
         {
-            Serial.println("Module 4 A");
+            // Serial.println("Module 4 A");
             memcpy(rawBatteryTemps+CELLS_4A,rxMsg.buf,6);
             break;
         }
         case (MODULE_4_B): 
         {
-            Serial.println("Module 4 B");
+            // Serial.println("Module 4 B");
             memcpy(rawBatteryTemps+CELLS_4B,rxMsg.buf,6);
             break;
         }
         case (MODULE_5_A): 
         {
-            Serial.println("Module 5 A");
+            // Serial.println("Module 5 A");
             memcpy(rawBatteryTemps+CELLS_5A,rxMsg.buf,6);
             break;
         }
         case (MODULE_5_B): 
         {
-            Serial.println("Module 5 B");
+            // Serial.println("Module 5 B");
             memcpy(rawBatteryTemps+CELLS_5B,rxMsg.buf,6);
             break;
         }
         case (MODULE_6_A): 
         {
-            Serial.println("Module 6 A");
+            // Serial.println("Module 6 A");
             memcpy(rawBatteryTemps+CELLS_6A,rxMsg.buf,6);
             break;
         }
         case (MODULE_6_B): 
         {
-            Serial.println("Module 6 B");
+            // Serial.println("Module 6 B");
             memcpy(rawBatteryTemps+CELLS_6B,rxMsg.buf,6);
             break;
         }
