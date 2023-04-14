@@ -54,7 +54,7 @@ static CAN_message_t rxMsg;
 
 // CAN bytes
 int8_t rawBatteryTemps[NUMBER_OF_CELLS];
-int8_t batteryTemps[NUMBER_OF_CELLS];
+float batteryTemps[NUMBER_OF_CELLS];
 int moduleNo = 0;                                                         // byte0
 int enabledTherm;                                                         // byte4
 byte getLowestTemp[] = {0x03, 0x22, 0xF0, 0x28, 0x55, 0x55, 0x55, 0x55};  // lowest temp request
@@ -228,17 +228,17 @@ void updateAccumulatorCAN()
     if (readACC_1(rxMsg))
     {
         #ifdef DEBUG
-        // Serial.print("MB "); Serial.print(rxMsg.mb);
-        // Serial.print("  OVERRUN: "); Serial.print(rxMsg.flags.overrun);
-        // Serial.print("  LEN: "); Serial.print(rxMsg.len);
-        // Serial.print(" EXT: "); Serial.print(rxMsg.flags.extended);
-        // Serial.print(" TS: "); Serial.print(rxMsg.timestamp);
-        // Serial.print(" ID: "); Serial.print(rxMsg.id, HEX);
-        // Serial.print(" Buffer: ");
-        // for ( uint8_t i = 0; i < rxMsg.len; i++ ) {
-        // Serial.print(rxMsg.buf[i], HEX); Serial.print(" ");
-        // } 
-        // Serial.println();
+        Serial.print("MB "); Serial.print(rxMsg.mb);
+        Serial.print("  OVERRUN: "); Serial.print(rxMsg.flags.overrun);
+        Serial.print("  LEN: "); Serial.print(rxMsg.len);
+        Serial.print(" EXT: "); Serial.print(rxMsg.flags.extended);
+        Serial.print(" TS: "); Serial.print(rxMsg.timestamp);
+        Serial.print(" ID: "); Serial.print(rxMsg.id, HEX);
+        Serial.print(" Buffer: ");
+        for ( uint8_t i = 0; i < rxMsg.len; i++ ) {
+        Serial.print(rxMsg.buf[i], HEX); Serial.print(" ");
+        } 
+        Serial.println();
         #endif
 
         switch (rxMsg.id)  // This is cancer probably and could better be implemented with a loop I imagine
@@ -335,12 +335,12 @@ void sendTempData()
     // This is assigning the calibrated battery temp array from the raw recieved one
     for (int i = 0; i < NUMBER_OF_CELLS; i++)
     {
-        batteryTemps[i]=(rawBatteryTemps[i]*-79.256)+168.4;
+        batteryTemps[i]=((((5*rawBatteryTemps[i])/255)*-79.256)+168.4);
         #ifdef DEBUG
         Serial.print("Cell number: ");
         Serial.print(i);
-        Serial.print(" Value: ");
-        Serial.println(batteryTemps[i]);
+        Serial.print("Raw Value: ");
+        Serial.println(rawBatteryTemps[i]);
         #endif
     }
 
@@ -351,10 +351,10 @@ void sendTempData()
     for (int i = 0; i < NUMBER_OF_CELLS; i++)
     { // get lowest and highest
         #ifdef DEBUG
-        // Serial.print("Cell number: ");
-        // Serial.print(i);
-        // Serial.print(" Value: ");
-        // Serial.println(batteryTemps[i]);
+        Serial.print("Cell number: ");
+        Serial.print(i);
+        Serial.print(" Value: ");
+        Serial.println(batteryTemps[i]);
         #endif
         if (batteryTemps[i] < lowTherm)
         {
