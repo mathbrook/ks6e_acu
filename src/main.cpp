@@ -54,7 +54,20 @@ static CAN_message_t rxMsg;
 
 // CAN bytes
 int8_t rawBatteryTemps[NUMBER_OF_CELLS];
-float batteryTemps[NUMBER_OF_CELLS];
+int8_t batteryTemps[NUMBER_OF_CELLS];
+float floatTemps;
+float calM = -79.256;
+float calB = 168.4;
+float cal255 = 255;
+float cal5V = 5;
+
+float ratioTemps;
+
+// floatTemps=((((cal5V*rawBatteryTemps[i])/cal255)*(calM))+calB);
+
+bool goodID=false;
+
+
 int moduleNo = 0;                                                         // byte0
 int enabledTherm;                                                         // byte4
 byte getLowestTemp[] = {0x03, 0x22, 0xF0, 0x28, 0x55, 0x55, 0x55, 0x55};  // lowest temp request
@@ -228,17 +241,17 @@ void updateAccumulatorCAN()
     if (readACC_1(rxMsg))
     {
         #ifdef DEBUG
-        Serial.print("MB "); Serial.print(rxMsg.mb);
-        Serial.print("  OVERRUN: "); Serial.print(rxMsg.flags.overrun);
-        Serial.print("  LEN: "); Serial.print(rxMsg.len);
-        Serial.print(" EXT: "); Serial.print(rxMsg.flags.extended);
-        Serial.print(" TS: "); Serial.print(rxMsg.timestamp);
-        Serial.print(" ID: "); Serial.print(rxMsg.id, HEX);
-        Serial.print(" Buffer: ");
-        for ( uint8_t i = 0; i < rxMsg.len; i++ ) {
-        Serial.print(rxMsg.buf[i], HEX); Serial.print(" ");
-        } 
-        Serial.println();
+        // Serial.print("MB "); Serial.print(rxMsg.mb);
+        // Serial.print("  OVERRUN: "); Serial.print(rxMsg.flags.overrun);
+        // Serial.print("  LEN: "); Serial.print(rxMsg.len);
+        // Serial.print(" EXT: "); Serial.print(rxMsg.flags.extended);
+        // Serial.print(" TS: "); Serial.print(rxMsg.timestamp);
+        // Serial.print(" ID: "); Serial.print(rxMsg.id, HEX);
+        // Serial.print(" Buffer: ");
+        // for ( uint8_t i = 0; i < rxMsg.len; i++ ) {
+        // Serial.print(rxMsg.buf[i], HEX); Serial.print(" ");
+        // } 
+        // Serial.println();
         #endif
 
         switch (rxMsg.id)  // This is cancer probably and could better be implemented with a loop I imagine
@@ -335,13 +348,33 @@ void sendTempData()
     // This is assigning the calibrated battery temp array from the raw recieved one
     for (int i = 0; i < NUMBER_OF_CELLS; i++)
     {
-        batteryTemps[i]=((((5*rawBatteryTemps[i])/255)*-79.256)+168.4);
+
+        // Below is some big BS lmao
+        ratioTemps = rawBatteryTemps[i]/cal255;
+
+        floatTemps=(((cal5V*ratioTemps)*(calM)) + calB);
+        
+        batteryTemps[i]=floatTemps;
+        
         #ifdef DEBUG
-        Serial.print("Cell number: ");
-        Serial.print(i);
-        Serial.print("Raw Value: ");
-        Serial.println(rawBatteryTemps[i]);
+        // Serial.print("Cell number: ");
+        // Serial.print(i);
+        // Serial.print("Raw Value: ");
+        // Serial.println(rawBatteryTemps[i]);
+
+        // Serial.print("Cell number: ");
+        // Serial.print(i);
+        // Serial.print("floatTemps Value: ");
+        // Serial.println(floatTemps);
+
+        // Serial.print("Cell number: ");
+        // Serial.print(i);
+        // Serial.print(" Value: ");
+        // Serial.println(batteryTemps[i]);
+
+        // Serial.println();
         #endif
+
     }
 
     int lowTherm = batteryTemps[0];
@@ -350,27 +383,62 @@ void sendTempData()
     int highestThermId = 0;
     for (int i = 0; i < NUMBER_OF_CELLS; i++)
     { // get lowest and highest
-        #ifdef DEBUG
-        Serial.print("Cell number: ");
-        Serial.print(i);
-        Serial.print(" Value: ");
-        Serial.println(batteryTemps[i]);
-        #endif
-        if (batteryTemps[i] < lowTherm)
-        {
-        lowTherm = batteryTemps[i];
-        lowestThermId = i;
+        
+        if(i>=0 && i<=5){
+            goodID=true;
         }
-        if (batteryTemps[i] > highTherm)
-        {
-        highTherm = batteryTemps[i];
-        highestThermId = i;
+        else if(i>=12 && i<=15){
+            goodID=true;
         }
-        #ifdef DEBUG
-        // Serial.printf("Iter: %d Highest: %d Lowest: %d\n",i,highTherm,lowTherm);
-        #endif
+        else if(i>=17 && i<=17){
+            goodID=true;
+        }
+        else if(i>=36 && i<=41){
+            goodID=true;
+        }
+        else if(i>=48 && i<=53){
+            goodID=true;
+        }
+        else{
+            goodID=false;
+        }
+    
+        if(goodID){
+            if (batteryTemps[i] < lowTherm)
+            {
+                lowTherm = batteryTemps[i];
+                lowestThermId = i;
+            }
+
+            if (batteryTemps[i] > highTherm)
+            {
+                highTherm = batteryTemps[i];
+                highestThermId = i;
+            }
+            
+            #ifdef DEBUG
+
+
+                // Serial.printf("Iter: %d Highest: %d Lowest: %d\n",i,highTherm,lowTherm);
+            #endif  
+        }
     }
 
+
+    Serial.print("Cell number: ");
+    Serial.print(lowestThermId);
+    Serial.print(" Min Value: ");
+    Serial.println(lowTherm);
+
+    Serial.print("Cell number: ");
+    Serial.print(highestThermId);
+    Serial.print(" Max Value: ");
+    Serial.println(highTherm);
+
+
+    // enabled 71
+    // High id 0
+    // Low 12
     int avgTherm = (lowTherm + highTherm) / 2;                                                                          // yep
     int checksum = moduleNo + lowTherm + highTherm + avgTherm + enabledTherm + highestThermId + lowestThermId + 57 + 8; // 0x39 and 0x08 added to checksum per orion protocol
     byte tempdata[] = {moduleNo, lowTherm, highTherm, avgTherm, enabledTherm, highestThermId, lowestThermId, checksum};
