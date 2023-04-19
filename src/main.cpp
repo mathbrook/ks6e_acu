@@ -16,6 +16,7 @@
 #include <FlexCAN_T4.h>
 #include <KS2e.h>
 #include <MDB_labels.h>
+#include <math.h>
 
 #define DEBUG
 // #define cantest
@@ -55,15 +56,18 @@ static CAN_message_t rxMsg;
 // CAN bytes
 int8_t rawBatteryTemps[NUMBER_OF_CELLS];
 int8_t batteryTemps[NUMBER_OF_CELLS];
-float floatTemps;
-float calM = -79.256;
-float calB = 168.4;
-float cal255 = 255;
-float cal5V = 5;
+float ratioTemps; // This is just to make the array a temp variable
+float floatTemps; // This is to save the math as a float first
+float cal5 = -0.000002416676401;
+float cal4 = 0.001082617446913;
+float cal3 = -0.194488265848684; // First part of the ^3 best fit
+float cal2 = 17.519770902801400; // Second
+float cal1 = -792.865188960333000; // Third
+float calIntercept = 14494.861100594600000;
 
-float ratioTemps;
 
-// floatTemps=((((cal5V*rawBatteryTemps[i])/cal255)*(calM))+calB);
+
+// floatTemps=((((cal5V*rawBatteryTe`1  qaaaaaaa    1qA1QAz1amps[i])/cal255)*(calM))+calB);
 
 bool goodID=false;
 
@@ -350,29 +354,29 @@ void sendTempData()
     {
 
         // Below is some big BS lmao
-        ratioTemps = rawBatteryTemps[i]/cal255;
+        ratioTemps = rawBatteryTemps[i];
 
-        floatTemps=(((cal5V*ratioTemps)*(calM)) + calB);
+        floatTemps=(cal5*pow(ratioTemps,5))+(cal4*pow(ratioTemps,4))+(cal3*pow(ratioTemps,3))+(cal2*pow(ratioTemps,2))+(cal1*(ratioTemps))+calIntercept;
         
         batteryTemps[i]=floatTemps;
         
         #ifdef DEBUG
-        // Serial.print("Cell number: ");
-        // Serial.print(i);
-        // Serial.print("Raw Value: ");
-        // Serial.println(rawBatteryTemps[i]);
+        Serial.print("Cell number: ");
+        Serial.print(i);
+        Serial.print("Raw Value: ");
+        Serial.println(rawBatteryTemps[i]);
 
-        // Serial.print("Cell number: ");
-        // Serial.print(i);
-        // Serial.print("floatTemps Value: ");
-        // Serial.println(floatTemps);
+        Serial.print("Cell number: ");
+        Serial.print(i);
+        Serial.print("floatTemps Value: ");
+        Serial.println(floatTemps);
 
-        // Serial.print("Cell number: ");
-        // Serial.print(i);
-        // Serial.print(" Value: ");
-        // Serial.println(batteryTemps[i]);
+        Serial.print("Cell number: ");
+        Serial.print(i);
+        Serial.print(" Value: ");
+        Serial.println(batteryTemps[i]);
 
-        // Serial.println();
+        Serial.println();
         #endif
 
     }
@@ -425,15 +429,15 @@ void sendTempData()
     }
 
 
-    Serial.print("Cell number: ");
-    Serial.print(lowestThermId);
-    Serial.print(" Min Value: ");
-    Serial.println(lowTherm);
+    // Serial.print("Cell number: ");
+    // Serial.print(lowestThermId);
+    // Serial.print(" Min Value: ");
+    // Serial.println(lowTherm);
 
-    Serial.print("Cell number: ");
-    Serial.print(highestThermId);
-    Serial.print(" Max Value: ");
-    Serial.println(highTherm);
+    // Serial.print("Cell number: ");
+    // Serial.print(highestThermId);
+    // Serial.print(" Max Value: ");
+    // Serial.println(highTherm);
 
 
     // enabled 71
