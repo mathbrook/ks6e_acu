@@ -354,11 +354,11 @@ void sendTempData()
     {
 
         // Below is some big BS lmao
-        ratioTemps = rawBatteryTemps[i];
+        ratioTemps = rawBatteryTemps[i]; // Sets the current part of the array to a temp variable so math functions can be done on it
 
-        floatTemps=(cal5*pow(ratioTemps,5))+(cal4*pow(ratioTemps,4))+(cal3*pow(ratioTemps,3))+(cal2*pow(ratioTemps,2))+(cal1*(ratioTemps))+calIntercept;
+        floatTemps=(cal5*pow(ratioTemps,5))+(cal4*pow(ratioTemps,4))+(cal3*pow(ratioTemps,3))+(cal2*pow(ratioTemps,2))+(cal1*(ratioTemps))+calIntercept; // Performs the calibration curve math
         
-        batteryTemps[i]=floatTemps;
+        batteryTemps[i]=round(floatTemps); // Rounds up or down according to standard practice before setting it back equal to battery temps
         
         #ifdef DEBUG
         Serial.print("Cell number: ");
@@ -381,6 +381,7 @@ void sendTempData()
 
     }
 
+    // Initalize the highest and lowest
     int lowTherm = batteryTemps[0];
     int lowestThermId = 0;
     int highTherm = batteryTemps[0];
@@ -421,14 +422,12 @@ void sendTempData()
             }
             
             #ifdef DEBUG
-
-
                 // Serial.printf("Iter: %d Highest: %d Lowest: %d\n",i,highTherm,lowTherm);
             #endif  
         }
     }
 
-
+    #ifdef DEBUG
     // Serial.print("Cell number: ");
     // Serial.print(lowestThermId);
     // Serial.print(" Min Value: ");
@@ -438,11 +437,8 @@ void sendTempData()
     // Serial.print(highestThermId);
     // Serial.print(" Max Value: ");
     // Serial.println(highTherm);
+    #endif
 
-
-    // enabled 71
-    // High id 0
-    // Low 12
     int avgTherm = (lowTherm + highTherm) / 2;                                                                          // yep
     int checksum = moduleNo + lowTherm + highTherm + avgTherm + enabledTherm + highestThermId + lowestThermId + 57 + 8; // 0x39 and 0x08 added to checksum per orion protocol
     byte tempdata[] = {moduleNo, lowTherm, highTherm, avgTherm, enabledTherm, highestThermId, lowestThermId, checksum};
