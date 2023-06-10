@@ -476,7 +476,7 @@ void get_relay_states() { // Changed to relay
     // bmsgpio = ALPHA * bmsgpio + (1 - ALPHA) * ADC.read_adc(BMS_GPIO);
     BODGEimdrelay = analogRead(ANALOG_IMD); // BODGE bc the pins are different with the bodge wires on the ACU now
     BODGEbmsrelay = analogRead(ANALOG_BMS);
-    if(BODGEimdrelay<10) {
+    if(BODGEimdrelay<20) {
         imdstate=true;
     }
     else {
