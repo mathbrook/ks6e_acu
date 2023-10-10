@@ -29,11 +29,12 @@
 //Torque Calculation Defines
 #define ALPHA 0.9772
 //Pump speed
-float imdrelay{},bmsrelay{},imdgpio{},bmsgpio{};
-float sdcvsense{},vsense5v{},vsense12v{},sdcsense{},sense12v{},sensefan{},humidity{},temp{};
+int imdrelay,bmsrelay,imdgpio,bmsgpio;
+int sdcvsense,vsense5v,vsense12v,sdcsense,sense12v,sensefan,humidity,temp;
 float BODGEimdrelay{};
 float BODGEbmsrelay{};
-bool imdstate{};
-bool bmsstate{};
-//ADC_SPI ADC(ADC_CS, DEFAULT_SPI_SPEED);
+bool imdstate;
+bool bmsstate;
+bool imdgpiostate;
+bool bmsgpiostate;
 #endif

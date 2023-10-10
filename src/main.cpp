@@ -17,7 +17,7 @@
 #include <KS2e.h>
 #include <MDB_labels.h>
 #include <math.h>
-
+#include <ADC_SPI.h>
 #define DEBUG
 // #define cantest
 
@@ -102,10 +102,12 @@ void updateAccumulatorCAN();
 void getTempData();
 void sendTempData();
 //void readBroadcast();
-
+ADC_SPI pedal_ADC;
 // Setup -----------------------------------------------------------------------
 void setup()
 {
+    pedal_ADC = ADC_SPI(DEFAULT_SPI_CS, DEFAULT_SPI_SPEED);
+    pinMode(FAN_CTRL,OUTPUT);
     Serial.begin(115200);
     delay(400);
 
@@ -170,7 +172,8 @@ void setup()
 void loop()
 {
     if(heartBeat.check()) {
-        digitalToggle(LED_BUILTIN);
+        // digitalToggle(LED_BUILTIN);
+        // Sadly this has to be disabled in order for the SPI comms to work (The SPI peripheral uses pin 13 which is shared with the LED)
     }
 
     if (getACCCanRate.check()) {
@@ -189,12 +192,15 @@ void loop()
         dashMsg.buf[0] = 0x68;
         dashMsg.buf[1] = imdstate;
         dashMsg.buf[2] = bmsstate;
+        dashMsg.buf[3] = imdgpiostate;
+        dashMsg.buf[4] = bmsgpiostate;
         dashMsg.id = 0x68;
         CAN_1.write(dashMsg);
     }
 
     if(fanTest.check()){
-        digitalToggle(FAN_CTRL);
+        // digitalToggle(FAN_CTRL);
+        digitalWrite(FAN_CTRL,HIGH); //Keep this HIGH cuz if you turn off the gpio the mosfet gate will get pulled high and right now there is no clamp zener to protect it
     }
 
 #ifdef cantest
@@ -223,7 +229,7 @@ void loop()
         // Serial.println(imdstate);
         // Serial.print("BMS: ");
         // Serial.println(bmsstate);
-
+        
         // Serial.println("");
     }
 #endif
@@ -361,22 +367,22 @@ void sendTempData()
         batteryTemps[i]=round(floatTemps); // Rounds up or down according to standard practice before setting it back equal to battery temps
         
         #ifdef DEBUG
-        Serial.print("Cell number: ");
-        Serial.print(i);
-        Serial.print("Raw Value: ");
-        Serial.println(rawBatteryTemps[i]);
+        // Serial.print("Cell number: ");
+        // Serial.print(i);
+        // Serial.print("Raw Value: ");
+        // Serial.println(rawBatteryTemps[i]);
 
-        Serial.print("Cell number: ");
-        Serial.print(i);
-        Serial.print("floatTemps Value: ");
-        Serial.println(floatTemps);
+        // Serial.print("Cell number: ");
+        // Serial.print(i);
+        // Serial.print("floatTemps Value: ");
+        // Serial.println(floatTemps);
 
-        Serial.print("Cell number: ");
-        Serial.print(i);
-        Serial.print(" Value: ");
-        Serial.println(batteryTemps[i]);
+        // Serial.print("Cell number: ");
+        // Serial.print(i);
+        // Serial.print(" Value: ");
+        // Serial.println(batteryTemps[i]);
 
-        Serial.println();
+        // Serial.println();
         #endif
 
     }
@@ -470,22 +476,57 @@ void getTempData()
 // analogRead for the IMD & BMS states
 void get_relay_states() { // Changed to relay
     /* Filter ADC readings */
-    // imdrelay = ALPHA * imdrelay + (1 - ALPHA) * ADC.read_adc(IMD_RELAY);
-    // bmsrelay = ALPHA * bmsrelay + (1 - ALPHA) * ADC.read_adc(BMS_RELAY);
-    // imdgpio = ALPHA * imdgpio + (1 - ALPHA) * ADC.read_adc(IMD_GPIO);
-    // bmsgpio = ALPHA * bmsgpio + (1 - ALPHA) * ADC.read_adc(BMS_GPIO);
-    BODGEimdrelay = analogRead(ANALOG_IMD); // BODGE bc the pins are different with the bodge wires on the ACU now
-    BODGEbmsrelay = analogRead(ANALOG_BMS);
-    if(BODGEimdrelay<20) {
+    imdrelay = pedal_ADC.read_adc(IMD_RELAY);
+    bmsrelay = pedal_ADC.read_adc(BMS_RELAY);
+    imdgpio = pedal_ADC.read_adc(IMD_GPIO);
+    bmsgpio = pedal_ADC.read_adc(BMS_GPIO);
+    #ifdef DEBUG
+
+    Serial.printf("ADC Channel IMDRELAY: %d BMSRELAY: %d IMDGPIO: %d BMSGPIO: %d\n",imdrelay,bmsrelay,imdgpio,bmsgpio);
+    #endif
+    // For all of these thingies, true = good state, false = bad state
+    /*
+    Values at 12.4V input to the board:
+    when relays are closed and GPIOs are in OK state:
+    ADC Channel IMDRELAY: 2 BMSRELAY: 0 IMDGPIO: 2167 BMSGPIO: 2124
+    IMD Relay State: 1 IMD Gpio State: 1 BMS Relay State: 1 BMS GPIO State: 1
+    when relays are open and GPIOs are in FAULT state:
+    ADC Channel IMDRELAY: 2230 BMSRELAY: 2141 IMDGPIO: 0 BMSGPIO: 0
+    IMD Relay State: 0 IMD Gpio State: 0 BMS Relay State: 0 BMS GPIO State: 0
+
+    Values at 14.4v input 
+    when relays are closed and GPIOs are in OK state:
+    ADC Channel IMDRELAY: 2 BMSRELAY: 0 IMDGPIO: 2293 BMSGPIO: 2250
+    IMD Relay State: 1 IMD Gpio State: 1 BMS Relay State: 1 BMS GPIO State: 1
+    when relays are open and GPIOs are in FAULT state:
+    ADC Channel IMDRELAY: 2313 BMSRELAY: 2265 IMDGPIO: 0 BMSGPIO: 0
+    IMD Relay State: 0 IMD Gpio State: 0 BMS Relay State: 0 BMS GPIO State: 0
+    */
+    if(imdrelay<50) {
         imdstate=true;
     }
     else {
         imdstate=false;
     }
-    if(BODGEbmsrelay<10) {
+    if(bmsrelay<50) {
         bmsstate=true;
     }
     else {
         bmsstate=false;
     }
+    if(imdgpio>500) {
+        imdgpiostate=true;
+    }
+    else {
+        imdgpiostate=false;
+    }
+    if(bmsgpio>500) {
+        bmsgpiostate=true;
+    }
+    else {
+        bmsgpiostate=false;
+    }
+    #ifdef DEBUG
+    Serial.printf("IMD Relay State: %d IMD Gpio State: %d BMS Relay State: %d BMS GPIO State: %d\n\n",imdstate,imdgpiostate,bmsstate,bmsgpiostate);
+    #endif
 }
