@@ -46,6 +46,7 @@ FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> CAN_1;
 static CAN_message_t testMsg;
 static CAN_message_t dashMsg;
 static CAN_message_t rxMsg;
+static CAN_message_t vi_measurementsMsg;
 
 // CAN IDs
 #define BMS_ID 0x7E3
@@ -75,14 +76,14 @@ bool goodID=false;
 int moduleNo = 0;                                                         // byte0
 int enabledTherm;                                                         // byte4
 byte getLowestTemp[] = {0x03, 0x22, 0xF0, 0x28, 0x55, 0x55, 0x55, 0x55};  // lowest temp request
-byte getHighestTemp[] = {0x03, 0x22, 0xF0, 0x29, 0x55, 0x55, 0x55, 0x55}; // lowest temp request
+byte getHighestTemp[] = {0x03, 0x22, 0xF0, 0x29, 0x55, 0x55, 0x55, 0x55}; // highest temp request
 
 // CAN timings
-Metro getACCCanRate = Metro(100);
-Metro getTempRate = Metro(500);
-Metro sendTempRate = Metro(100);
-Metro sendCAN_1 = Metro(50);
-Metro sendCANTest = Metro(50);
+Metro getACCCanRate = Metro(100,1);
+Metro getTempRate = Metro(500,1);
+Metro sendTempRate = Metro(100,1);
+Metro sendCAN_1 = Metro(50,1);
+Metro sendCANTest = Metro(50,1);
 
 // Regular timings
 Metro fanTest = Metro(5000);
@@ -97,6 +98,7 @@ bool inverter_restart = false;
 
 /*****PROTOTYPES*****/
 void get_relay_states();
+void get_vi_measurements();
 int readACC_1(CAN_message_t &msg);
 void updateAccumulatorCAN();
 void getTempData();
@@ -108,6 +110,7 @@ void setup()
 {
     pedal_ADC = ADC_SPI(DEFAULT_SPI_CS, DEFAULT_SPI_SPEED);
     pinMode(FAN_CTRL,OUTPUT);
+    analogReadResolution(8); //12.890625mV per bit at 8bit resolution (3.3v/256)
     Serial.begin(115200);
     delay(400);
 
@@ -186,16 +189,28 @@ void loop()
 
     if(getRelay.check()){
         get_relay_states();
+        get_vi_measurements();
     }
 
     if(sendCAN_1.check()){
-        dashMsg.buf[0] = 0x68;
+        dashMsg.buf[0] = ID_ACU_RELAY;
         dashMsg.buf[1] = imdstate;
         dashMsg.buf[2] = bmsstate;
         dashMsg.buf[3] = imdgpiostate;
         dashMsg.buf[4] = bmsgpiostate;
-        dashMsg.id = 0x68;
+        dashMsg.id = ID_ACU_RELAY;
         CAN_1.write(dashMsg);
+
+        vi_measurementsMsg.id = ID_ACU_MEASUREMENTS;
+        vi_measurementsMsg.buf[0] = vsense12v;
+        vi_measurementsMsg.buf[1] = sdcvsense;
+        vi_measurementsMsg.buf[2] = vsense5v;
+        vi_measurementsMsg.buf[3] = sense12v;
+        vi_measurementsMsg.buf[4] = sdcsense;
+        vi_measurementsMsg.buf[5] = sensefan;
+        vi_measurementsMsg.buf[6] = humidity;
+        vi_measurementsMsg.buf[7] = temp;
+        CAN_1.write(vi_measurementsMsg);
     }
 
     if(fanTest.check()){
@@ -527,6 +542,19 @@ void get_relay_states() { // Changed to relay
         bmsgpiostate=false;
     }
     #ifdef DEBUG
-    Serial.printf("IMD Relay State: %d IMD Gpio State: %d BMS Relay State: %d BMS GPIO State: %d\n\n",imdstate,imdgpiostate,bmsstate,bmsgpiostate);
+    Serial.printf("\nIMD Relay State: %d IMD Gpio State: %d BMS Relay State: %d BMS GPIO State: %d\n\n",imdstate,imdgpiostate,bmsstate,bmsgpiostate);
+    #endif
+}
+void get_vi_measurements(){
+    sdcvsense=analogRead(VSENSE_12V);
+    vsense5v=analogRead(VSENSE_5V);
+    vsense12v=analogRead(VSENSE_SDC);
+    sdcsense=analogRead(SDC_SENSE);
+    sense12v=analogRead(SENSE_12V);
+    sensefan=analogRead(SENSE_FAN);
+    humidity=analogRead(ANALOG_BMS);
+    temp=analogRead(ANALOG_IMD);
+    #ifdef DEBUG
+    Serial.printf("\nSDC voltage: %d current: %d 12v voltage: %d current: %d 5v voltage: %d fan current: %d humidity v: %d temp v: %d\n",sdcvsense,sdcsense,vsense12v,sense12v,vsense5v,sensefan,humidity,temp);
     #endif
 }
