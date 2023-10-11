@@ -5,11 +5,12 @@
 #include <FlexCAN_T4.h>
 #include <Metro.h>
 #include <MCU_status.h>
-#include <SPI.h>
+//#include <SPI.h>
 #include <string.h>
 #include <stdint.h>
 #include <KS2eVCUgpios.h>
 #include <VCUNeoPixelBullshitLMFAO.h>
+#include <KS2eCAN.hpp>
 // #include <drivers.h>
 //Pedalbox stuff
 #define BRAKE_ACTIVE 2300               // Threshold for brake pedal active  
@@ -29,7 +30,12 @@
 //Torque Calculation Defines
 #define ALPHA 0.9772
 //Pump speed
-float imdrelay{},bmsrelay{},imdgpio{},bmsgpio{};
-float sdcvsense{},vsense5v{},vsense12v{},sdcsense{},sense12v{},sensefan{},humidity{},temp{};
-ADC_SPI ADC(DEFAULT_SPI_CS, DEFAULT_SPI_SPEED);
+int imdrelay,bmsrelay,imdgpio,bmsgpio;
+uint8_t sdcvsense,vsense5v,vsense12v,sdcsense,sense12v,sensefan,humidity,temp;
+float BODGEimdrelay{};
+float BODGEbmsrelay{};
+bool imdstate;
+bool bmsstate;
+bool imdgpiostate;
+bool bmsgpiostate;
 #endif
